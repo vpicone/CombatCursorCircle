@@ -1,0 +1,25 @@
+## Interface: 120001, 120000
+## Title: CombatCursorCircle
+## Notes: Draws a customizable ring around your cursor during combat.
+## Author: Thermal
+## Version: 1.0.0
+## SavedVariables: CombatCursorCircleDB
+## IconTexture: Interface\Icons\ability_warrior_bladestorm
+## Category: Combat
+## Category-enUS: Combat
+## Category-deDE: Kampf
+## Category-esES: Combate
+## Category-esMX: Combate
+## Category-frFR: Combat
+## Category-itIT: Combattimento
+## Category-ptBR: Combate
+## Category-ruRU: Бой
+## Category-koKR: 전투
+## Category-zhCN: 战斗
+## Category-zhTW: 戰鬥
+## AddonCompartmentFunc: CombatCursorCircle_OnAddonCompartmentClick
+## AddonCompartmentFuncOnEnter: CombatCursorCircle_OnAddonCompartmentEnter
+## AddonCompartmentFuncOnLeave: CombatCursorCircle_OnAddonCompartmentLeave
+
+core.lua
+ring.lua
