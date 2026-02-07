@@ -7,7 +7,7 @@ CCC.DEFAULTS = {
     enabled   = true,
     radius    = 40,
     thickness = 2,
-    segments  = 48,
+    segments  = 256,
     colorR    = 1.0,
     colorG    = 0.2,
     colorB    = 0.2,
@@ -58,7 +58,6 @@ local function PrintHelp()
     CCC:PrintMessage("  /ccc color <r> <g> <b> - Set color (0-1 each)")
     CCC:PrintMessage("  /ccc opacity <0-1> - Set ring opacity")
     CCC:PrintMessage("  /ccc thickness <1-10> - Set line thickness")
-    CCC:PrintMessage("  /ccc segments <12-128> - Set segment count")
     CCC:PrintMessage("  /ccc pulse - Toggle pulse animation")
     CCC:PrintMessage("  /ccc pulsespeed <0.5-5> - Set pulse speed")
     CCC:PrintMessage("  /ccc fadein <0-2> - Set fade-in duration")
@@ -77,7 +76,6 @@ local function PrintStatus()
     CCC:PrintMessage(string.format("  Color: %.2f, %.2f, %.2f", db.colorR, db.colorG, db.colorB))
     CCC:PrintMessage(string.format("  Opacity: %.2f", db.opacity))
     CCC:PrintMessage(string.format("  Thickness: %d", db.thickness))
-    CCC:PrintMessage(string.format("  Segments: %d", db.segments))
     CCC:PrintMessage(string.format("  Pulse: %s (speed %.1f)", db.pulse and "on" or "off", db.pulseSpeed))
     CCC:PrintMessage(string.format("  Fade in: %.2fs / Fade out: %.2fs", db.fadeIn, db.fadeOut))
 end
@@ -131,13 +129,6 @@ function CCC:HandleSlashCommand(input)
         if not val then self:PrintMessage("Usage: /ccc thickness <1-10>"); return end
         db.thickness = Clamp(math.floor(val), 1, 10)
         self:PrintMessage("Thickness set to " .. db.thickness)
-        self:RebuildRing()
-
-    elseif cmd == "segments" then
-        local val = tonumber(args[2])
-        if not val then self:PrintMessage("Usage: /ccc segments <12-128>"); return end
-        db.segments = Clamp(math.floor(val), 12, 128)
-        self:PrintMessage("Segments set to " .. db.segments)
         self:RebuildRing()
 
     elseif cmd == "pulse" then

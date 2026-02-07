@@ -6,7 +6,7 @@ local cos, sin = math.cos, math.sin
 -- References for refresh
 local controls = {}
 local settingsCategory
-local previewFrame, previewLines, previewElapsed
+local previewFrame, previewLineFrame, previewLines, previewElapsed
 
 -------------------------------------------------------------------------------
 -- UI Helpers
@@ -158,33 +158,38 @@ local PREVIEW_SIZE = 200
 local PREVIEW_MAX_RADIUS = 85
 
 local function RefreshPreview()
-    if not previewFrame then return end
+    if not previewLineFrame then return end
     local db = CCC.db
 
     local radius = math.min(db.radius, PREVIEW_MAX_RADIUS)
-    local numSegments = db.segments
     local thickness = db.thickness
-    local r, g, b, a = db.colorR, db.colorG, db.colorB, db.opacity
+    -- Auto-scale segments for smooth circle, same as ring.lua
+    local minForSmooth = math.ceil(PI2 * radius / 10)
+    local numSegments = math.max(db.segments, minForSmooth)
     local angleStep = PI2 / numSegments
+    local overlap = thickness / (2 * radius)
 
     for i = 1, numSegments do
         local line = previewLines[i]
         if not line then
-            line = previewFrame:CreateLine(nil, "ARTWORK")
+            line = previewLineFrame:CreateLine(nil, "ARTWORK")
             previewLines[i] = line
         end
-        local a1 = (i - 1) * angleStep
-        local a2 = i * angleStep
-        line:SetStartPoint("CENTER", previewFrame, cos(a1) * radius, sin(a1) * radius)
-        line:SetEndPoint("CENTER", previewFrame, cos(a2) * radius, sin(a2) * radius)
+        local a1 = (i - 1) * angleStep - overlap
+        local a2 = i * angleStep + overlap
+        line:SetStartPoint("CENTER", previewLineFrame, cos(a1) * radius, sin(a1) * radius)
+        line:SetEndPoint("CENTER", previewLineFrame, cos(a2) * radius, sin(a2) * radius)
         line:SetThickness(thickness)
-        line:SetColorTexture(r, g, b, a)
+        line:SetColorTexture(db.colorR, db.colorG, db.colorB, 1)
         line:Show()
     end
 
     for i = numSegments + 1, #previewLines do
         previewLines[i]:Hide()
     end
+
+    -- Opacity on the line container, not individual lines
+    previewLineFrame:SetAlpha(db.opacity)
 
     -- Pulse state
     if db.pulse then
@@ -267,17 +272,6 @@ function CCC:InitSettings()
             RefreshPreview()
         end,
         function(v) return string.format("%d px", v) end
-    )
-    y = y - 42
-
-    controls.segments = CreateSettingsSlider(canvas, 20, y, "Segments", 12, 128, 1,
-        function() return CCC.db.segments end,
-        function(val)
-            CCC.db.segments = val
-            CCC:RebuildRing()
-            RefreshPreview()
-        end,
-        function(v) return string.format("%d", v) end
     )
     y = y - 42
 
@@ -395,6 +389,13 @@ function CCC:InitSettings()
     previewFrame:SetSize(PREVIEW_SIZE, PREVIEW_SIZE)
     previewFrame:SetClipsChildren(true)
     previewFrame.pulseActive = false
+
+    -- Line container with flattened render layers (overlap without alpha artifacts)
+    previewLineFrame = CreateFrame("Frame", nil, previewFrame)
+    previewLineFrame:SetAllPoints(previewFrame)
+    if previewLineFrame.SetFlattensRenderLayers then
+        previewLineFrame:SetFlattensRenderLayers(true)
+    end
 
     -- Pulse animation in preview
     previewFrame:SetScript("OnUpdate", function(self, dt)

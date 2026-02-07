@@ -7,14 +7,26 @@ local GetCursorPosition = GetCursorPosition
 -------------------------------------------------------------------------------
 -- State
 -------------------------------------------------------------------------------
-local ringFrame       -- main frame
+local ringFrame       -- main frame (alpha used for fade/pulse animations)
+local lineFrame       -- child frame holding lines (alpha = configured opacity)
 local lines = {}      -- line texture pool
+local activeSegments = 0
 local isShowing = false
 local testTimer = nil
 
 -- Animation references
 local fadeInGroup, fadeOutGroup
 local pulseFrame, pulseElapsed
+
+-------------------------------------------------------------------------------
+-- Helpers
+-------------------------------------------------------------------------------
+
+-- Auto-scale segment count so each segment is at most ~10px long
+local function CalcEffectiveSegments(radius, userSegments)
+    local minForSmooth = math.ceil(PI2 * radius / 10)
+    return math.max(userSegments, minForSmooth)
+end
 
 -------------------------------------------------------------------------------
 -- Ring initialisation
@@ -24,6 +36,15 @@ function CCC:InitRing()
     ringFrame:SetFrameStrata("HIGH")
     ringFrame:SetSize(1, 1)
     ringFrame:Hide()
+
+    -- Line container: flattened render layers means overlapping segments
+    -- composite at full opacity first, then the frame alpha applies once.
+    -- This lets us use overlap to close joint gaps without double-alpha artifacts.
+    lineFrame = CreateFrame("Frame", nil, ringFrame)
+    lineFrame:SetAllPoints(ringFrame)
+    if lineFrame.SetFlattensRenderLayers then
+        lineFrame:SetFlattensRenderLayers(true)
+    end
 
     -- Cursor tracking (only runs while frame is shown)
     ringFrame:SetScript("OnUpdate", function()
@@ -42,30 +63,27 @@ end
 -------------------------------------------------------------------------------
 function CCC:BuildLines()
     local db = self.db
-    local numSegments = db.segments
     local radius = db.radius
     local thickness = db.thickness
+    local numSegments = CalcEffectiveSegments(radius, db.segments)
     local angleStep = PI2 / numSegments
+    -- Extend each segment slightly so adjacent segments overlap at joints
+    local overlap = thickness / (2 * radius)
 
-    -- Reuse existing lines, create more if needed
     for i = 1, numSegments do
         local line = lines[i]
         if not line then
-            line = ringFrame:CreateLine(nil, "OVERLAY")
-            line:SetColorTexture(1, 1, 1, 1)
+            line = lineFrame:CreateLine(nil, "OVERLAY")
             lines[i] = line
         end
 
-        local a1 = (i - 1) * angleStep
-        local a2 = i * angleStep
-        local x1 = cos(a1) * radius
-        local y1 = sin(a1) * radius
-        local x2 = cos(a2) * radius
-        local y2 = sin(a2) * radius
-
-        line:SetStartPoint("CENTER", ringFrame, x1, y1)
-        line:SetEndPoint("CENTER", ringFrame, x2, y2)
+        local a1 = (i - 1) * angleStep - overlap
+        local a2 = i * angleStep + overlap
+        line:SetStartPoint("CENTER", lineFrame, cos(a1) * radius, sin(a1) * radius)
+        line:SetEndPoint("CENTER", lineFrame, cos(a2) * radius, sin(a2) * radius)
         line:SetThickness(thickness)
+        -- Full alpha on the texture; opacity is controlled by lineFrame
+        line:SetColorTexture(db.colorR, db.colorG, db.colorB, 1)
         line:Show()
     end
 
@@ -74,7 +92,8 @@ function CCC:BuildLines()
         lines[i]:Hide()
     end
 
-    self:UpdateRingAppearance()
+    activeSegments = numSegments
+    lineFrame:SetAlpha(db.opacity)
 end
 
 -------------------------------------------------------------------------------
@@ -82,13 +101,13 @@ end
 -------------------------------------------------------------------------------
 function CCC:UpdateRingAppearance()
     local db = self.db
-    local r, g, b, a = db.colorR, db.colorG, db.colorB, db.opacity
-    for i = 1, db.segments do
+    for i = 1, activeSegments do
         local line = lines[i]
         if line then
-            line:SetColorTexture(r, g, b, a)
+            line:SetColorTexture(db.colorR, db.colorG, db.colorB, 1)
         end
     end
+    lineFrame:SetAlpha(db.opacity)
 end
 
 -------------------------------------------------------------------------------
@@ -139,9 +158,7 @@ function CCC:SetupAnimations()
         pulseElapsed = pulseElapsed + dt
         local speed = CCC.db.pulseSpeed
         local wave = 0.5 + 0.5 * sin(pulseElapsed * speed * PI2)
-        -- Oscillate between 40% and 100% of configured opacity
-        local minAlpha = 0.4
-        local alpha = minAlpha + (1 - minAlpha) * wave
+        local alpha = 0.4 + 0.6 * wave
         ringFrame:SetAlpha(alpha)
     end)
 end
