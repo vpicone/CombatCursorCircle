@@ -1,5 +1,7 @@
 # CombatCursorCircle
 
+![CombatCursorCircle Settings Menu](ccc-menu.png)
+
 A World of Warcraft addon that draws a customizable ring around your cursor during combat. Zero CPU cost outside of combat.
 
 Compatible with WoW 12.0 Midnight (Interface 120000/120001).
