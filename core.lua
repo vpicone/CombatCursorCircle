@@ -61,6 +61,7 @@ end
 
 local function PrintHelp()
     CCC:PrintMessage("Commands:")
+    CCC:PrintMessage("  /ccc options - Open settings panel")
     CCC:PrintMessage("  /ccc toggle - Enable/disable the addon")
     CCC:PrintMessage("  /ccc radius <10-200> - Set ring radius")
     CCC:PrintMessage("  /ccc color <r> <g> <b> - Set color (0-1 each)")
@@ -73,7 +74,6 @@ local function PrintHelp()
     CCC:PrintMessage("  /ccc test - Preview ring for 3 seconds")
     CCC:PrintMessage("  /ccc status - Show current settings")
     CCC:PrintMessage("  /ccc reset - Restore defaults")
-    CCC:PrintMessage("  /ccc options - Open settings panel")
 end
 
 local function PrintStatus()
