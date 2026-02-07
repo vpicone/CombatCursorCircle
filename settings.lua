@@ -427,7 +427,6 @@ function CCC:InitSettings()
     -- Register with Blizzard Settings API
     -----------------------------------------------------------------------
     local category = Settings.RegisterCanvasLayoutCategory(canvas, "CombatCursorCircle")
-    category.ID = "CombatCursorCircle"
     Settings.RegisterAddOnCategory(category)
     settingsCategory = category
 end
@@ -448,7 +447,10 @@ end
 -- Open the settings panel
 -------------------------------------------------------------------------------
 function CCC:OpenSettings()
-    if settingsCategory then
-        Settings.OpenToCategory(settingsCategory:GetID())
+    if not settingsCategory then return end
+    if InCombatLockdown() then
+        self:PrintMessage("Cannot open settings in combat.")
+        return
     end
+    Settings.OpenToCategory(settingsCategory:GetID())
 end
