@@ -264,8 +264,6 @@ function CCC:TestRing(duration)
     end
 
     self:ShowRing()
-    self:PrintMessage(string.format("Test mode: showing ring for %d seconds.", duration))
-
     testTimer = C_Timer.NewTimer(duration, function()
         testTimer = nil
         -- Don't hide if real combat started during test

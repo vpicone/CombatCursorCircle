@@ -21,9 +21,17 @@ CCC.DEFAULTS = {
 -------------------------------------------------------------------------------
 -- Database
 -------------------------------------------------------------------------------
+local DB_VERSION = 1
+
 local function InitDB()
     if not CombatCursorCircleDB then
         CombatCursorCircleDB = {}
+    end
+    -- Version tracking for future migrations
+    local oldVersion = CombatCursorCircleDB._version or 0
+    if oldVersion < DB_VERSION then
+        -- Future migrations go here
+        CombatCursorCircleDB._version = DB_VERSION
     end
     for k, v in pairs(CCC.DEFAULTS) do
         if CombatCursorCircleDB[k] == nil then
@@ -225,6 +233,7 @@ eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
 
 eventFrame:SetScript("OnEvent", function(_, event)
     if event == "PLAYER_LOGIN" then
+        eventFrame:UnregisterEvent("PLAYER_LOGIN")
         InitDB()
         CCC:InitRing()
         CCC:InitSlashCommands()
