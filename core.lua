@@ -66,6 +66,7 @@ local function PrintHelp()
     CCC:PrintMessage("  /ccc test - Preview ring for 3 seconds")
     CCC:PrintMessage("  /ccc status - Show current settings")
     CCC:PrintMessage("  /ccc reset - Restore defaults")
+    CCC:PrintMessage("  /ccc options - Open settings panel")
 end
 
 local function PrintStatus()
@@ -167,6 +168,9 @@ function CCC:HandleSlashCommand(input)
     elseif cmd == "test" then
         self:TestRing(3)
 
+    elseif cmd == "options" or cmd == "settings" or cmd == "config" then
+        self:OpenSettings()
+
     elseif cmd == "status" then
         PrintStatus()
 
@@ -204,7 +208,7 @@ function CombatCursorCircle_OnAddonCompartmentClick(_, button)
             CCC:HideRing()
         end
     else
-        PrintHelp()
+        CCC:OpenSettings()
     end
 end
 
@@ -212,7 +216,7 @@ function CombatCursorCircle_OnAddonCompartmentEnter(_, menuButtonFrame)
     GameTooltip:SetOwner(menuButtonFrame, "ANCHOR_LEFT")
     GameTooltip:AddLine("CombatCursorCircle")
     GameTooltip:AddLine("Left-click: Toggle on/off", 1, 1, 1)
-    GameTooltip:AddLine("Right-click: Show commands", 1, 1, 1)
+    GameTooltip:AddLine("Right-click: Open settings", 1, 1, 1)
     GameTooltip:Show()
 end
 
@@ -233,6 +237,7 @@ eventFrame:SetScript("OnEvent", function(_, event)
         InitDB()
         CCC:InitRing()
         CCC:InitSlashCommands()
+        CCC:InitSettings()
         -- Handle login during combat (reconnect)
         if InCombatLockdown() and CCC.db.enabled then
             CCC:ShowRing()
